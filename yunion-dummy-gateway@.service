@@ -1,0 +1,13 @@
+[Unit]
+Description=Yunion Dummy Gateway for %I
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/yunion/bin/yunion-dummy-gateway up %i
+ExecStop=/opt/yunion/bin/yunion-dummy-gateway down %i
+
+[Install]
+WantedBy=multi-user.target
