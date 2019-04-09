@@ -1,6 +1,6 @@
 用于为All-in-One部署中的子网提供网关支持，使虚拟子网中的节点能够与外界通信
 
-配置文件，`/etc/yunion/dummy-gatway/<network-name>`
+配置文件，`/etc/yunion/dummy-gateway/<network-name>`
 
 | 变量名  | 默认值 | 备注 |
 | ------- | ------ | ---- |
