@@ -22,3 +22,8 @@
 应用
 
 	systemctl restart yunion-host-sdnagent
+
+测试效果
+
+ - 从`veth-gwa`所在机器上能够与虚拟子网中节点通信
+ - 从虚拟子网中节点能够与外界通过NAT通信
