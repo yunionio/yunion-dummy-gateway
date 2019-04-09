@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -o xtrace
+set -o errexit
+set -o pipefail
+
+action="$1"; shift		# up/down
+name="$1"; shift		# network name
+
+source "/etc/yunion/dummy-gateway/$name"
+[ -n "$OVS_BRIDGE" ] || OVS_BRIDGE=br0
+[ -n "$BOND" ] || BOND=bond-gw
+[ -n "$VETH" ] || VETH=veth-gw
+[ -n "$VLAN" ] || VLAN=2
+[ -n "$NETWORK" ] || NETWORK=10.0.2.0/24
+[ -n "$GATEWAY" ] || GATEWAY=10.0.2.1/24
+
+up() {
+	down
+
+	ip link add dev "$BOND" type bond
+	ip link add dev "${VETH}a" type veth peer name "${VETH}b"
+
+	ip link set "${VETH}b" master "$BOND"
+	ovs-vsctl \
+		-- --may-exist add-port "$OVS_BRIDGE" "$BOND" \
+		-- set Port "$BOND" "tag=$VLAN" \
+
+	ip addr add "$GATEWAY" dev "${VETH}a"
+	ip link set "$BOND" up
+	ip link set "${VETH}a" up
+	ip link set "${VETH}b" up
+	sysctl -w net.ipv4.ip_forward=1
+	iptables -t filter -P FORWARD ACCEPT
+	iptables -t nat -A POSTROUTING -o "$OVS_BRIDGE" -s "$NETWORK" -j MASQUERADE
+}
+
+down_() {
+	ip link del "$BOND"
+	ip link del "${VETH}a"
+	while iptables -t nat -D POSTROUTING -o "$OVS_BRIDGE" -s "$NETWORK" -j MASQUERADE &>/dev/null; do :; done
+}
+
+down() {
+	down_ || true
+}
+
+"$action"
